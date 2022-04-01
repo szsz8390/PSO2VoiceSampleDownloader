@@ -7,12 +7,45 @@ const string t2file = "pso2_voice_t2.txt";
 const string t1cfile = "pso2_voice_t1c.txt";
 const string t2cfile = "pso2_voice_t2c.txt";
 
+var currentCulture = System.Globalization.CultureInfo.CurrentUICulture;
+bool isJp = currentCulture.Equals(System.Globalization.CultureInfo.GetCultureInfo("ja-JP"));
+string lang = isJp ? "ja" : "en";
+
 string curDir = System.Environment.CurrentDirectory;
 
 string[] fileNames = { t1file, t2file, t1cfile, t2cfile };
 string[] typeNames = { "Human Type 1", "Human Type 2", "CAST Type 1", "CAST Type 2" };
+if (isJp)
+{
+    typeNames = new string[] { "ヒト型タイプ1", "ヒト型タイプ2", "キャストタイプ1", "キャストタイプ2" };
+}
+else
+{
+    typeNames = new string[] { "Human Type 1", "Human Type 2", "CAST Type 1", "CAST Type 2" };
+}
 
 HttpClient httpClient = new HttpClient();
+
+string indexFilePath = Path.Combine(curDir, "_catalog.html");
+var indexFileText = new System.Text.StringBuilder();
+indexFileText.Append($@"<!DOCTYPE html>
+<html lang=""{lang}"">
+<head>
+<title>PSO2 Voice List</title>
+</head>
+<body>
+<h1>PSO2 Voice List</h1>
+<ul>
+");
+foreach (var typename in typeNames)
+{
+    indexFileText.AppendLine($"<li><a href=\"./{typename}/_catalog.html\">{typename}</a></li>");
+}
+indexFileText.Append(@"
+</ul>
+</body>
+</html>
+");
 
 for (var i = 0; i < fileNames.Length; i++)
 {
@@ -22,6 +55,19 @@ for (var i = 0; i < fileNames.Length; i++)
     if (File.Exists(path))
     {
         string typeDirPath = Path.Combine(curDir, typeName);
+        string catalogFilePath = Path.Combine(typeDirPath, "_catalog.html");
+        var catalogFileText = new System.Text.StringBuilder();
+        catalogFileText.Append($@"
+<!DOCTYPE html>
+<html lang=""{lang}"">
+<head>
+<title>{typeName}</title>
+</head>
+<body>
+<h1>{typeName}</h1>
+<table>
+");
+
         string[] lines = File.ReadAllLines(path);
         Directory.CreateDirectory(Path.Combine(curDir, typeName));
         foreach (var line in lines)
@@ -33,6 +79,15 @@ for (var i = 0; i < fileNames.Length; i++)
             string voice1 = parts[2];
             string voice2 = parts[3];
             string voice3 = parts[4];
+            catalogFileText.Append($@"
+<tr>
+  <td>{parts[0]}</td><td>{parts[1]}</td>
+  <td>
+    <audio src=""{voice1}.ogg"" class=""v{voice1}"" controls></audio>
+    <audio src=""{voice2}.ogg"" class=""v{voice2}"" controls></audio>
+    <audio src=""{voice3}.ogg"" class=""v{voice3}"" controls></audio>
+  </td>
+</tr>");
             string[] voices = { voice1, voice2, voice3 };
             int dlCount = 0;
             foreach (var voice in voices)
@@ -65,5 +120,13 @@ for (var i = 0; i < fileNames.Length; i++)
                 Thread.Sleep(3000);
             }
         }
+        catalogFileText.Append(@"
+</table>
+</body>
+</html>
+");
+        File.WriteAllText(catalogFilePath, catalogFileText.ToString());
     }
 }
+
+File.WriteAllText(indexFilePath, indexFileText.ToString());
