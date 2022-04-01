@@ -14,7 +14,7 @@ string[] typeNames = { "Human Type 1", "Human Type 2", "CAST Type 1", "CAST Type
 
 HttpClient httpClient = new HttpClient();
 
-for (var i = 1; i < fileNames.Length; i++)
+for (var i = 0; i < fileNames.Length; i++)
 {
     string typeName = typeNames[i];
     string path = Path.Combine(curDir, fileNames[i]);
@@ -65,7 +65,5 @@ for (var i = 1; i < fileNames.Length; i++)
                 Thread.Sleep(3000);
             }
         }
-
-
     }
 }
