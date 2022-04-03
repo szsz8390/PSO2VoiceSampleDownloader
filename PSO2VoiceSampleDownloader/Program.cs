@@ -9,22 +9,25 @@ const string t2cfile = "pso2_voice_t2c.txt";
 
 var currentCulture = System.Globalization.CultureInfo.CurrentUICulture;
 bool isJp = currentCulture.Equals(System.Globalization.CultureInfo.GetCultureInfo("ja-JP"));
-string lang = isJp ? "ja" : "en";
 
 string curDir = System.Environment.CurrentDirectory;
 
+string lang;
 string[] fileNames = { t1file, t2file, t1cfile, t2cfile };
-string[] typeNames = { "Human Type 1", "Human Type 2", "CAST Type 1", "CAST Type 2" };
+string[] typeNames;
+string baseUrl;
 if (isJp)
 {
+    lang = "ja";
     typeNames = new string[] { "ヒト型タイプ1", "ヒト型タイプ2", "キャストタイプ1", "キャストタイプ2" };
+    baseUrl = "https://pso2.jp/players/catalog/audio/";
 }
 else
 {
+    lang = "en";
     typeNames = new string[] { "Human Type 1", "Human Type 2", "CAST Type 1", "CAST Type 2" };
+    baseUrl = "https://pso2.com/players/catalog/audio/";
 }
-
-HttpClient httpClient = new HttpClient();
 
 string indexFilePath = Path.Combine(curDir, "_catalog.html");
 var indexFileText = new System.Text.StringBuilder();
@@ -37,6 +40,7 @@ indexFileText.Append($@"<!DOCTYPE html>
 <h1>PSO2 Voice List</h1>
 <ul>
 ");
+
 foreach (var typename in typeNames)
 {
     indexFileText.AppendLine($"<li><a href=\"./{typename}/_catalog.html\">{typename}</a></li>");
@@ -46,6 +50,11 @@ indexFileText.Append(@"
 </body>
 </html>
 ");
+
+File.WriteAllText(indexFilePath, indexFileText.ToString());
+indexFileText.Clear();
+
+HttpClient httpClient = new HttpClient();
 
 for (var i = 0; i < fileNames.Length; i++)
 {
@@ -99,7 +108,7 @@ for (var i = 0; i < fileNames.Length; i++)
                     Console.WriteLine("    file already exists. skip it.");
                     continue;
                 }
-                using (var request = new HttpRequestMessage(HttpMethod.Get, new Uri("https://pso2.jp/players/catalog/audio/" + voice + ".ogg")))
+                using (var request = new HttpRequestMessage(HttpMethod.Get, new Uri(baseUrl + voice + ".ogg")))
                 using (var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead))
                 {
                     if (response.StatusCode == HttpStatusCode.OK)
@@ -129,4 +138,3 @@ for (var i = 0; i < fileNames.Length; i++)
     }
 }
 
-File.WriteAllText(indexFilePath, indexFileText.ToString());
